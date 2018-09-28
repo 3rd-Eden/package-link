@@ -1,0 +1,172 @@
+#!/usr/bin/env node
+
+const NPM = require('npm-shizzle');
+const mkdirp = require('mkdirp');
+const argh = require('argh');
+const path = require('path');
+const fs = require('fs');
+
+/**
+ * Restores the `npm link` automatically.
+ *
+ * @param {String} root The root location.
+ * @public
+ */
+class Link {
+  constructor(root) {
+    this.root = root || process.cwd();
+    this.npm = new NPM(this.root);
+    this.argv = argh.argv;
+  }
+
+  /**
+   * Get the location of the hooks directory.
+   *
+   * @returns {String} Absolute path to the hooks directory.
+   * @public
+   */
+  get hook() {
+    return path.join(this.root, 'node_modules', '.hooks');
+  }
+
+  /**
+   * Get the location of the storage file.
+   *
+   * @returns {String} Absolute path to the file.
+   * @public
+   */
+  get file() {
+    return path.join(this.hook, 'restore-npm-link.json');
+  }
+
+  /**
+   * Read all existing links from the storage file.
+   *
+   * @returns {Array} The list of links.
+   * @public
+   */
+  read() {
+    let data = [];
+
+    try { data = JSON.parse(fs.readFileSync(this.file, 'utf-8')); }
+    catch (e) {}
+
+    return data;
+  }
+
+  /**
+   * Write all existing links to the storage file.
+   *
+   * @param {Array} links Name of the links.
+   * @public
+   */
+  write(links) {
+    mkdirp.sync(this.hook);
+    return fs.writeFileSync(this.file, JSON.stringify(links), 'utf-8');
+  }
+
+  /**
+   * Register the required .hooks/postinstall file.
+   *
+   * @public
+   */
+  setup() {
+    const source = fs.readFileSync(path.join(__dirname, 'postinstall'));
+    const location = path.join(path.join(this.hook, 'postinstall'));
+
+    mkdirp.sync(this.hook);
+    fs.writeFileSync(location, source);
+    fs.chmodSync(location, '777');
+  }
+
+  /**
+   * Restore all previously added `npm link` commands.
+   *
+   * @public
+   */
+  restore() {
+    this.read().forEach((name) => {
+      this.npm.link(name);
+    });
+  }
+
+  /**
+   * Add a new file to the list.
+   *
+   * @param {String} name Name of the link to add.
+   * @public
+   */
+  add(name) {
+    const links = this.read();
+
+    this.write(links.concat(name).filter(Boolean).filter((name, index, array) => {
+      return array.indexOf(name) === index;
+    }));
+
+    this.npm.link(name);
+  }
+
+  /**
+   * Remove a link.
+   *
+   * @param {String} name Name to remove.
+   * @public
+   */
+   remove(name) {
+     const links = this.read();
+
+     this.write(links.filter((link) => {
+       return link !== name;
+     }));
+
+     this.npm.install(name);
+   }
+
+   /**
+    * Run as CLI.
+    *
+    * @public
+    */
+   cli() {
+     if (this.argv.remove) return this.remove(this.argv.remove);
+     if (this.argv.restore) return this.restore();
+     if (this.argv.setup) return this.setup();
+
+     if (this.argv.help || !this.argv.add) {
+       return [
+         'npm-link: Restore `npm link` after they are whiped by `npm install`',
+         '',
+         'Available flags:',
+         '',
+         '--setup                 Add the .hooks/postinstall hook for automated symlink restore',
+         '--add [name]            Add a new symlink to your project',
+         '--remove [name]         Removes the `npm link` and re-installs the normal version',
+         '--restore               Restores all added `npm-link --add` based links',
+         '--help                  Display this message',
+         '',
+         'Example:',
+         '',
+         'npm-link --remove react',
+         'npm-link --add react'
+       ].forEach((line) => console.log(line));
+     }
+
+     //
+     // Last case, we need to link what even is given to us.
+     //
+     this.add(this.argv.add);
+   }
+}
+
+//
+// Expose the library
+//
+module.exports = Link;
+
+//
+// Auto run as cli when it's not required as a library
+//
+if (!module.parent) {
+  const link = new Link();
+  link.cli();
+}

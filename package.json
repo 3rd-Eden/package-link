@@ -1,0 +1,36 @@
+{
+  "name": "npmsymlink",
+  "version": "1.0.0",
+  "description": "Restores `npm link` after a `npm install` for a given project",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test.js"
+  },
+  "bin": {
+    "npm-link": "./npm-link"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3rd-Eden/npmsymlink.git"
+  },
+  "keywords": [
+    "npm",
+    "link",
+    "install"
+  ],
+  "author": "Arnout Kazemier",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/3rd-Eden/npmsymlink/issues"
+  },
+  "homepage": "https://github.com/3rd-Eden/npmsymlink#readme",
+  "dependencies": {
+    "argh": "^0.1.4",
+    "mkdirp": "^0.5.1",
+    "npm-shizzle": "^1.1.0"
+  },
+  "devDependencies": {
+    "assume": "^2.1.0",
+    "mocha": "^5.2.0"
+  }
+}

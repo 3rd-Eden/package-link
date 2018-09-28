@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+
+const { exec } = require('child_process');
+
+exec('npm-link --restore', {
+  cwd: process.env.INIT_CWD || process.cwd()
+}, (err, stdout, stderr) => {
+  if (err) {
+    console.log('npm-link: failed to restore symlinks after installation');
+  }
+
+  return;
+});
