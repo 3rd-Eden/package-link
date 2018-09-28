@@ -1,4 +1,4 @@
-# npmsymlink
+# package-link
 
 So you might wonder, what on earth is this and why would I need this? It fixes
 a particulary annyoing feature of `npm`, which is the automatic deletion of
@@ -12,7 +12,7 @@ automatically (or manually) restore **all** symlinks of your project.
 As this is a `cli` application, it needs to be installed globally:
 
 ```
-npm install -g npmsymlink
+npm install -g package-link
 ```
 
 This will install the `npm-link` cli on your system.
